@@ -70,7 +70,6 @@ class MainActivity : AppCompatActivity() {
                 connection.requestMethod = "GET"
                 connection.connect()
 
-                // Verificar el código de respuesta HTTP
                 val responseCode = connection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     println("Conexión exitosa: Código $responseCode")
@@ -78,7 +77,6 @@ class MainActivity : AppCompatActivity() {
                     println("Error de conexión: Código $responseCode")
                 }
 
-                // Cerrar la conexión
                 connection.disconnect()
 
             } catch (e: Exception) {
@@ -94,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         mjpeg!!.mode = MjpegView.MODE_FIT_WIDTH
         mjpeg!!.isAdjustHeight = true
         mjpeg!!.supportPinchZoomAndPan = true
-        mjpeg!!.setUrl("http://192.168.253.97:81/stream")
+        mjpeg!!.setUrl("http://192.168.151.97:81/stream")
         mjpeg!!.isRecycleBitmap = true
 
         //mjpeg!!.
@@ -118,7 +116,6 @@ class MainActivity : AppCompatActivity() {
         if (mjpegView.isLaidOut) {
             return mjpegView.drawToBitmap()
         } else {
-            // Si la vista no está aún dispuesta (laid out), lanza un error o retorna null
             return null
         }
     }
@@ -131,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                 if (frameBitmap != null) {
                     processBitmap(frameBitmap)
 //                    runOnUiThread {
-//                        binding.imageView.setImageBitmap(frameBitmap) 
+//                        binding.imageView.setImageBitmap(frameBitmap)
 //                    }
                 }
                 handler.postDelayed(this, captureInterval)
@@ -158,6 +155,7 @@ class MainActivity : AppCompatActivity() {
      */
     external fun stringFromJNI(): String
     external fun detectorBordes(bIn: Bitmap, bOut: Bitmap)
+    //external fun filtro(bIn: Bitmap, bOut: Bitmap);
 
     companion object {
         // Used to load the 'proyectocamara' library on application startup.

@@ -54,14 +54,11 @@ void bitmapToMat(JNIEnv * env, jobject bitmap, cv::Mat &dst, jboolean needUnPrem
 
 void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremultiplyAlpha) {
     AndroidBitmapInfo info;
-    void*
-            pixels = 0;
+    void* pixels = 0;
     try {
         CV_Assert( AndroidBitmap_getInfo(env, bitmap, &info) >= 0 );
-        CV_Assert( info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
-                   info.format == ANDROID_BITMAP_FORMAT_RGB_565 );
-        CV_Assert( src.dims == 2 && info.height == (uint32_t)src.rows && info.width ==
-                                                                         (uint32_t)src.cols );
+        CV_Assert( info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 || info.format == ANDROID_BITMAP_FORMAT_RGB_565 );
+        CV_Assert( src.dims == 2 && info.height == (uint32_t)src.rows && info.width == (uint32_t)src.cols );
         CV_Assert( src.type() == CV_8UC1 || src.type() == CV_8UC3 || src.type() == CV_8UC4 );
         CV_Assert( AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0 );
         CV_Assert( pixels );
@@ -106,12 +103,77 @@ void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremult
 }
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
-    cv::Mat src;
-    cv::Mat tmp;
-    cv::Mat bordes;
-    bitmapToMat(env, bitmapIn, src, false);
-    cv:cvtColor(src, tmp, cv::COLOR_BGR2GRAY);
-    cv::Laplacian(tmp, bordes, CV_16S, 3);
-    cv::convertScaleAbs(bordes, bordes);
-    matToBitmap(env, bordes, bitmapOut, false);
+    cv::Mat frame;
+    bitmapToMat(env, bitmapIn, frame, false);  // bitmapToMat es una función personalizada
+
+    cv::flip(frame, frame, 1);
+    cv::Mat elemento = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
+
+    cv::Rect roi(0,0, frame.cols/2, frame.rows/2);
+
+    cv::Rect rei(frame.cols/2, 0, frame.cols/2, frame.rows/2);
+    cv::Rect tercero(0, frame.rows/2, frame.cols/2, frame.rows/2);
+    cv::Rect cuarto(frame.cols/2, frame.rows/2, frame.cols/2, frame.rows/2);
+
+
+    cv::Mat frame_roi = frame(roi);
+    cv::Mat frame_rei = frame(rei);
+
+    morphologyEx(frame_roi, frame_roi, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
+
+
+    morphologyEx(frame_rei, frame_rei, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+
+    cv::Mat dilat = frame(tercero);
+    cv::Mat dilatC = frame(cuarto);
+
+//    cvtColor(dilat, dilat, cv::COLOR_BGR2GRAY);
+//    cvtColor(dilat, dilat, cv::COLOR_GRAY2BGR);
+
+
+//    cvtColor(dilatC, dilatC, cv::COLOR_BGR2GRAY);
+//    cvtColor(dilatC, dilatC, cv::COLOR_GRAY2BGR);
+
+
+    ////////
+
+    cv::Mat erosis ;
+    cv::Mat erosisss ;
+    morphologyEx(dilat, erosisss, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+    morphologyEx(dilat, erosis, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
+
+
+    cv::Mat cu;
+    cv::Mat cc;
+
+
+    morphologyEx(dilatC, cu, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+    morphologyEx(dilatC, cc, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
+
+
+
+    cv::Mat dife;
+    absdiff(erosis, erosisss, dife);
+
+    cv::Mat diferencia;
+    cv::Mat negado;
+    absdiff(cc,cu,diferencia);
+
+
+    bitwise_not(diferencia, negado);
+
+
+
+        dilat.copyTo(frame(tercero));
+
+
+        dife.copyTo(frame(tercero));
+
+        dilatC.copyTo(frame(cuarto));
+
+        negado.copyTo(frame(cuarto));
+
+
+
+    matToBitmap(env, frame, bitmapOut, false);
 }
