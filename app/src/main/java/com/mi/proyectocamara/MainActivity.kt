@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         mjpeg!!.mode = MjpegView.MODE_FIT_WIDTH
         mjpeg!!.isAdjustHeight = true
         mjpeg!!.supportPinchZoomAndPan = true
-        mjpeg!!.setUrl("http://192.168.151.97:81/stream")
+        mjpeg!!.setUrl("http://192.168.61.97:81/stream")
         mjpeg!!.isRecycleBitmap = true
 
         //mjpeg!!.

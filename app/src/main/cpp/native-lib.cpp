@@ -7,6 +7,13 @@
 #include "android/bitmap.h"
 
 
+cv::Mat imgGx;
+cv::Mat imgGy;
+cv::Mat imgGxAbs;
+cv::Mat imgGyAbs;
+cv::Mat foregroundMask,pixelatedPerson,filteredFrame;
+cv::Ptr<cv::BackgroundSubtractor> bgSubtractor = cv::createBackgroundSubtractorMOG2();
+
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_mi_proyectocamara_MainActivity_stringFromJNI(
         JNIEnv* env,
@@ -101,9 +108,76 @@ void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremult
         return;
     }
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void pixelate3D(const cv::Mat& input, cv::Mat& output, int pixelSize) {
+    int rows = input.rows;
+    int cols = input.cols;
+    input.copyTo(output);  // Crear copia del frame original
+
+    for (int i = 0; i < rows; i += pixelSize) {
+        for (int j = 0; j < cols; j += pixelSize) {
+            cv::Rect region(j, i, pixelSize, pixelSize);  // Definir área del bloque
+
+            if (i + pixelSize > rows) region.height = rows - i;
+            if (j + pixelSize > cols) region.width = cols - j;
+
+            cv::Scalar blockColor = mean(input(region));  // Color promedio del bloque
+
+            // Rellenar el bloque con el color base
+            rectangle(output, region, blockColor, cv::FILLED);
+
+            // Dibujar el contorno claro (luz desde arriba a la izquierda)
+            line(output, cv::Point(j, i), cv::Point(j + region.width, i), cv::Scalar(255, 255, 255), 1);  // Línea superior
+            //line(output, Point(j, i), Point(j, i + region.height), Scalar(255, 255, 255), 1);  // Línea izquierda
+
+            // Dibujar sombra en la parte inferior y derecha
+            line(output, cv::Point(j, i + region.height - 1),
+                 cv::Point(j + region.width, i + region.height - 1), cv::Scalar(50, 50, 50), 1);  // Línea inferior
+            line(output, cv::Point(j + region.width - 1, i),
+                 cv::Point(j + region.width - 1, i + region.height), cv::Scalar(50, 50, 50), 1);  // Línea derecha
+        }
+    }
+}
+
+void filtroBackgorund(cv::Mat& frame, cv::Mat& mask){
+    // Espejar la imagen horizontalmente
+    //flip(frame, frame, 1);
+
+    // Aplicar el filtro pixelado
+    cv::Mat filtro;
+
+    //cvtColor(frame,filtro,COLOR_BGR2GRAY);
+
+    // Aplicar la sustracción de fondo
+    bgSubtractor->apply(frame, foregroundMask);
+    //morphologyEx(foregroundMask,foregroundMask, MORPH_OPEN, getStructuringElement(MORPH_RECT, Size(5,5)));
+    //dilate(foregroundMask,foregroundMask,getStructuringElement(MORPH_ELLIPSE, Size(5,5)));
+    GaussianBlur(foregroundMask, foregroundMask, cv::Size(5,5), 1.72, 1.73);
+    Sobel(foregroundMask,imgGx,CV_16S,1,0,3);
+    Sobel(foregroundMask,imgGy,CV_16S,0,1,3);
+
+    convertScaleAbs(imgGx,imgGxAbs);
+    convertScaleAbs(imgGy,imgGyAbs);
+
+    addWeighted(imgGxAbs, 0.5, imgGyAbs, 0.5, 0,foregroundMask);
+
+    std::vector<std::vector<cv::Point>> contours;
+    findContours(foregroundMask,contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
+    mask = cv::Mat::zeros(frame.size(), CV_8UC1);
+    drawContours(mask, contours, -1, cv::Scalar(255), cv::FILLED);
+    frame.copyTo(pixelatedPerson, mask);
+    pixelate3D(pixelatedPerson,filteredFrame,15);
+    //cv::Mat result;
+    //frame.copyTo(result);  // Copiar la imagen original
+    //filteredFrame.copyTo(result, mask);
+}
+
+
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
     cv::Mat frame;
+
     bitmapToMat(env, bitmapIn, frame, false);  // bitmapToMat es una función personalizada
 
     cv::flip(frame, frame, 1);
@@ -122,7 +196,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detect
     morphologyEx(frame_roi, frame_roi, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
 
 
-    morphologyEx(frame_rei, frame_rei, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+    filtroBackgorund(frame_rei, frame_rei);
+
+    if(!frame.empty()){
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    }
+    //morphologyEx(frame_rei, frame_rei, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+
+    frame_rei.copyTo(frame(rei));
+    
 
     cv::Mat dilat = frame(tercero);
     cv::Mat dilatC = frame(cuarto);
@@ -172,6 +254,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detect
         dilatC.copyTo(frame(cuarto));
 
         negado.copyTo(frame(cuarto));
+
 
 
 
