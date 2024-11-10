@@ -17,13 +17,25 @@
 <Button
     android:layout_width="match_parent"
     android:layout_height="wrap_content" android:text="Prender" android:id="@+id/prender"/>
-
+<TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content" android:text="Video Original"/>
 <com.longdo.mjpegviewer.MjpegView
     android:layout_width="match_parent" android:id="@+id/video"
     android:layout_height="300dp"/>
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Video con FIltro"/>
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="300dp" android:id="@+id/imageView"/>
+
+        <SeekBar
+            android:id="@+id/barra"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:textAlignment="center"
+            android:text="Tamaño del circulo"
+            android:textSize="18sp" android:max="50" android:min="0"
+            android:layout_marginTop="16dp"/>
     </LinearLayout>
 </RelativeLayout>

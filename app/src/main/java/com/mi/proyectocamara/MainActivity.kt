@@ -13,6 +13,7 @@ import android.view.SurfaceView
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.drawToBitmap
@@ -37,7 +38,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var boton: Button
 
     private lateinit var handler: Handler
-    private val captureInterval: Long = 100
+    private val captureInterval: Long = 50
+
+    private lateinit var seekBar: SeekBar
+    private var valor: Int = 10
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,8 +60,26 @@ class MainActivity : AppCompatActivity() {
         boton.setOnClickListener{
             extraer()
         }
-        checkUrlConnection("http://192.168.10.28:81/stream");
+        checkUrlConnection("http://192.168.10.28:81/stream")
 
+        seekBar  = findViewById(R.id.barra)
+
+        seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                // Incrementar el valor entero y actualizar el TextView
+
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+                valor = seekBar!!.progress
+                onTrack(valor)
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                valor = seekBar!!.progress
+                onTrack(valor)
+            }
+        })
 
     }
 
@@ -90,6 +113,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun extraer(){
         mjpeg!!.mode = MjpegView.MODE_FIT_WIDTH
+
         mjpeg!!.isAdjustHeight = true
         mjpeg!!.supportPinchZoomAndPan = true
         mjpeg!!.setUrl("http://192.168.61.97:81/stream")
@@ -155,6 +179,7 @@ class MainActivity : AppCompatActivity() {
      */
     external fun stringFromJNI(): String
     external fun detectorBordes(bIn: Bitmap, bOut: Bitmap)
+    external fun onTrack(valor: Int)
     //external fun filtro(bIn: Bitmap, bOut: Bitmap);
 
     companion object {
