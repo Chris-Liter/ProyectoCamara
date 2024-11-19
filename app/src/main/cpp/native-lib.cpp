@@ -188,7 +188,7 @@ void filtroBackgorund(cv::Mat& frame, cv::Mat& mask){
 }
 cv::Mat elemento = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
 
-int blockSize = 0;
+int blockSize = 1;
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_onTrack(JNIEnv* env,jobject /*this*/,jint pos){
     blockSize = pos > 0 ? pos : 1;
@@ -291,14 +291,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detect
 
 
 
-        dilat.copyTo(frame(tercero));
+    dilat.copyTo(frame(tercero));
 
 
-        dife.copyTo(frame(tercero));
+    dife.copyTo(frame(tercero));
 
-        dilatC.copyTo(frame(cuarto));
+    dilatC.copyTo(frame(cuarto));
 
-        negado.copyTo(frame(cuarto));
+    //negado.copyTo(frame(cuarto));
+    pixelate3D(dilatC, dilatC, blockSize);
 
     if(!frame.empty()){
         cv::cvtColor(frame, frame, cv::COLOR_GRAY2BGR);
