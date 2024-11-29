@@ -69,6 +69,7 @@ dependencies {
     implementation ("androidx.media3:media3-ui:1.4.1")
 
     implementation ("com.perthcpe23.dev:android-mjpeg-view:1.1.2")
+    implementation(kotlin("script-runtime"))
 
 
 }

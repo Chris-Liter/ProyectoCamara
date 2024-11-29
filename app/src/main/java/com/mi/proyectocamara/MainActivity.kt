@@ -2,11 +2,13 @@ package com.mi.proyectocamara
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.TrafficStats
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.provider.ContactsContract.CommonDataKinds.Website.URL
+import android.view.Choreographer
 import android.view.PixelCopy
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -42,6 +44,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var seekBar: SeekBar
     private var valor: Int = 10
+    private lateinit var anchoBanda: TextView
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,14 +63,16 @@ class MainActivity : AppCompatActivity() {
         boton.setOnClickListener{
             extraer()
         }
-        checkUrlConnection("http://192.168.10.28:81/stream")
+        //checkUrlConnection("http://192.168.10.28:81/stream")
+        anchoBanda = findViewById(R.id.ancho)
+
 
         seekBar  = findViewById(R.id.barra)
 
         seekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                // Incrementar el valor entero y actualizar el TextView
-
+                valor = seekBar!!.progress
+                onTrack(valor)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -111,16 +116,18 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
     private fun extraer(){
         mjpeg!!.mode = MjpegView.MODE_FIT_WIDTH
 
         mjpeg!!.isAdjustHeight = true
         mjpeg!!.supportPinchZoomAndPan = true
-        mjpeg!!.setUrl("http://192.168.249.97:81/stream")
+        mjpeg!!.setUrl("http://192.168.239.97:81/stream")
         mjpeg!!.isRecycleBitmap = true
 
         //mjpeg!!.
         mjpeg!!.startStream()
+        startFrameCapture()
     }
 
 
@@ -136,8 +143,30 @@ class MainActivity : AppCompatActivity() {
         stopFrameCapture()
     }
 
+
+    fun medirAnchoDeBanda() {
+        val uid = applicationInfo.uid
+        val inicioRx = TrafficStats.getUidRxBytes(uid)
+        val inicioTx = TrafficStats.getUidTxBytes(uid)
+
+        // Después de un tiempo
+        //Thread.sleep(1000) // Espera 1 segundo
+        val finRx = TrafficStats.getUidRxBytes(uid)
+        val finTx = TrafficStats.getUidTxBytes(uid)
+
+        val bytesRecibidos = (finRx - inicioRx) / 1024 // KB
+        val bytesEnviados = (finTx - inicioTx) / 1024 // KB
+        println("Ancho de banda: Recibidos ${bytesRecibidos}KB/s, Enviados ${bytesEnviados}KB/s")
+        anchoBanda.text = "Ancho de banda: Recibidos ${bytesRecibidos}KB/s, Enviados ${bytesEnviados}KB/s"
+    }
+
     fun capture(mjpegView: MjpegView): Bitmap?{
+        //medirAnchoDeBanda()
+        //medirFPS()
         if (mjpegView.isLaidOut) {
+            mjpegView.isDrawingCacheEnabled = true
+
+            mjpegView.drawToBitmap()
             return mjpegView.drawToBitmap()
         } else {
             return null

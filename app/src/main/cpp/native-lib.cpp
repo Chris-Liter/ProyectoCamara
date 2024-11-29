@@ -61,66 +61,58 @@ void bitmapToMat(JNIEnv * env, jobject bitmap, cv::Mat &dst, jboolean needUnPrem
 
 void matToBitmap(JNIEnv * env, cv::Mat src, jobject bitmap, jboolean needPremultiplyAlpha) {
     AndroidBitmapInfo info;
-    void* pixels = 0;
+    void*
+            pixels = 0;
     try {
-        // Obtener la información del bitmap
-        CV_Assert(AndroidBitmap_getInfo(env, bitmap, &info) >= 0);
-        CV_Assert(info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 || info.format == ANDROID_BITMAP_FORMAT_RGB_565);
-
-        // Verificar que el tamaño del bitmap coincida con el de la matriz
-        CV_Assert(src.dims == 2 && info.height == (uint32_t)src.rows && info.width == (uint32_t)src.cols);
-        CV_Assert(src.type() == CV_8UC1 || src.type() == CV_8UC3 || src.type() == CV_8UC4);
-
-        // Bloquear el acceso a los píxeles del bitmap
-        CV_Assert(AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0);
-        CV_Assert(pixels);
-
-        if (info.format == ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        CV_Assert( AndroidBitmap_getInfo(env, bitmap, &info) >= 0 );
+        CV_Assert( info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 ||
+                   info.format == ANDROID_BITMAP_FORMAT_RGB_565 );
+        CV_Assert( src.dims == 2 && info.height == (uint32_t)src.rows && info.width ==
+                                                                         (uint32_t)src.cols );
+        CV_Assert( src.type() == CV_8UC1 || src.type() == CV_8UC3 || src.type() == CV_8UC4 );
+        CV_Assert( AndroidBitmap_lockPixels(env, bitmap, &pixels) >= 0 );
+        CV_Assert( pixels );
+        if( info.format == ANDROID_BITMAP_FORMAT_RGBA_8888 )
+        {
             cv::Mat tmp(info.height, info.width, CV_8UC4, pixels);
-
-            if (src.type() == CV_8UC1) {
-                // Convertir de escala de grises a RGBA
-                cv::cvtColor(src, tmp, cv::COLOR_GRAY2RGBA);
-            } else if (src.type() == CV_8UC3) {
-                // Convertir de RGB a RGBA
-                cv::cvtColor(src, tmp, cv::COLOR_RGB2RGBA);
-            } else if (src.type() == CV_8UC4) {
-                // Comprobar si es necesario aplicar la pre-multiplicación de alfa
-                if (needPremultiplyAlpha) {
-                    cv::cvtColor(src, tmp, cv::COLOR_RGBA2mRGBA);
-                } else {
-                    src.copyTo(tmp);
-                }
+            if(src.type() == CV_8UC1)
+            {
+                cvtColor(src, tmp, cv::COLOR_GRAY2RGBA);
+            } else if(src.type() == CV_8UC3){
+                cvtColor(src, tmp, cv::COLOR_RGB2RGBA);
+            } else if(src.type() == CV_8UC4){
+                if(needPremultiplyAlpha) cvtColor(src, tmp, cv::COLOR_RGBA2mRGBA);
+                else src.copyTo(tmp);
             }
-        } else if (info.format == ANDROID_BITMAP_FORMAT_RGB_565) {
+        } else {
+// info.format == ANDROID_BITMAP_FORMAT_RGB_565
             cv::Mat tmp(info.height, info.width, CV_8UC2, pixels);
-
-            if (src.type() == CV_8UC1) {
-                // Convertir de escala de grises a BGR565
-                cv::cvtColor(src, tmp, cv::COLOR_GRAY2BGR565);
-            } else if (src.type() == CV_8UC3) {
-                // Convertir de RGB a BGR565
-                cv::cvtColor(src, tmp, cv::COLOR_RGB2BGR565);
-            } else if (src.type() == CV_8UC4) {
-                // Convertir de RGBA a BGR565 (descartando el canal alfa)
-                cv::cvtColor(src, tmp, cv::COLOR_RGBA2BGR565);
+            if(src.type() == CV_8UC1)
+            {
+                cvtColor(src, tmp, cv::COLOR_GRAY2BGR565);
+            } else if(src.type() == CV_8UC3){
+                cvtColor(src, tmp, cv::COLOR_RGB2BGR565);
+            } else if(src.type() == CV_8UC4){
+                cvtColor(src, tmp, cv::COLOR_RGBA2BGR565);
             }
         }
-
-        // Desbloquear el acceso a los píxeles del bitmap
         AndroidBitmap_unlockPixels(env, bitmap);
-    } catch (const cv::Exception& e) {
-        // Desbloquear en caso de excepción y lanzar error
+        return;
+    } catch(const cv::Exception& e) {
         AndroidBitmap_unlockPixels(env, bitmap);
+//jclass je = env->FindClass("org/opencv/core/CvException");
         jclass je = env->FindClass("java/lang/Exception");
+//if(!je) je = env->FindClass("java/lang/Exception");
         env->ThrowNew(je, e.what());
+        return;
     } catch (...) {
-        // Desbloquear en caso de excepción desconocida
         AndroidBitmap_unlockPixels(env, bitmap);
         jclass je = env->FindClass("java/lang/Exception");
-        env->ThrowNew(je, "Unknown exception in JNI code {matToBitmap}");
+        env->ThrowNew(je, "Unknown exception in JNI code {nMatToBitmap}");
+        return;
     }
 }
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -212,6 +204,10 @@ void pixels(cv::Mat& frame, cv::Mat& salida){
         }
     }
 }
+//double lastTime = (double)cv::getTickCount();
+//double fps = 0.0;
+std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::steady_clock::now();
+
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
 
@@ -241,6 +237,15 @@ extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detect
     pixels(frame_roi, frame_roi);
 
     filtroBackgorund(frame_rei, frame_rei);
+
+
+    auto currentTime = std::chrono::steady_clock::now();
+    double fps = 1.0 / std::chrono::duration_cast<std::chrono::duration<double>>(currentTime - lastTime).count();
+    lastTime = currentTime;
+
+    // Mostrar FPS en la esquina superior izquierda
+    std::string fpsText = "FPS: " + std::to_string(static_cast<int>(fps));
+    cv::putText(frame, fpsText, cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 255), 2);
 
 
     if(!frame.empty()){
