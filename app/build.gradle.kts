@@ -71,5 +71,18 @@ dependencies {
     implementation ("com.perthcpe23.dev:android-mjpeg-view:1.1.2")
     implementation(kotlin("script-runtime"))
 
+    implementation("androidx.camera:camera-camera2:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+
+    //CLient
+
+
+    implementation ("androidx.security:security-crypto:1.1.0-alpha03")
+
+    implementation ("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
 }

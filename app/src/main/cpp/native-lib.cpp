@@ -180,9 +180,14 @@ void filtroBackgorund(cv::Mat& frame, cv::Mat& mask){
 }
 cv::Mat elemento = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
 
-int blockSize = 1;
+int blockSize = 10;
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_Interciclo_onTrack(JNIEnv* env,jobject /*this*/,jint pos){
+    blockSize = pos > 0 ? pos : 1;
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_TrabajoFinal_onTrack(JNIEnv* env,jobject /*this*/,jint pos){
     blockSize = pos > 0 ? pos : 1;
 }
 
@@ -210,6 +215,115 @@ std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::stead
 
 
 extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_Interciclo_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
+
+    AndroidBitmapInfo infoIn;
+    void *pixelsIn;
+    AndroidBitmap_getInfo(env, bitmapIn, &infoIn);
+    AndroidBitmap_lockPixels(env, bitmapIn, &pixelsIn);
+
+    cv::Mat frame(infoIn.height, infoIn.width, CV_8UC4, pixelsIn);
+
+    bitmapToMat(env, bitmapIn, frame, false);  // bitmapToMat es una función personalizada
+
+    cv::flip(frame, frame, 1);
+
+    cv::Rect roi(0,0, frame.cols/2, frame.rows/2);
+
+    cv::Rect rei(frame.cols/2, 0, frame.cols/2, frame.rows/2);
+    cv::Rect tercero(0, frame.rows/2, frame.cols/2, frame.rows/2);
+    cv::Rect cuarto(frame.cols/2, frame.rows/2, frame.cols/2, frame.rows/2);
+
+
+    cv::Mat frame_roi = frame(roi);
+    cv::Mat frame_rei = frame(rei);
+
+    morphologyEx(frame_roi, frame_roi, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
+
+    pixels(frame_roi, frame_roi);
+
+    filtroBackgorund(frame_rei, frame_rei);
+
+
+    auto currentTime = std::chrono::steady_clock::now();
+    double fps = 1.0 / std::chrono::duration_cast<std::chrono::duration<double>>(currentTime - lastTime).count();
+    lastTime = currentTime;
+
+    // Mostrar FPS en la esquina superior izquierda
+    std::string fpsText = "FPS: " + std::to_string(static_cast<int>(fps));
+    cv::putText(frame, fpsText, cv::Point(10, 50), cv::FONT_HERSHEY_SIMPLEX, 1.5, cv::Scalar(255, 255, 255), 2);
+
+
+    if(!frame.empty()){
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    }
+    //morphologyEx(frame_rei, frame_rei, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+
+    frame_rei.copyTo(frame(rei));
+
+
+    cv::Mat dilat = frame(tercero);
+    cv::Mat dilatC = frame(cuarto);
+
+//    cvtColor(dilat, dilat, cv::COLOR_BGR2GRAY);
+//    cvtColor(dilat, dilat, cv::COLOR_GRAY2BGR);
+
+
+//    cvtColor(dilatC, dilatC, cv::COLOR_BGR2GRAY);
+//    cvtColor(dilatC, dilatC, cv::COLOR_GRAY2BGR);
+
+
+    ////////
+
+    cv::Mat erosis ;
+    cv::Mat erosisss ;
+    morphologyEx(dilat, erosisss, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),3);
+    morphologyEx(dilat, erosis, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),3);
+
+
+    cv::Mat cu;
+    cv::Mat cc;
+
+
+    morphologyEx(dilatC, cu, cv::MORPH_ERODE, elemento, cv::Point(-1,-1),5);
+    morphologyEx(dilatC, cc, cv::MORPH_DILATE, elemento, cv::Point(-1,-1),5);
+
+
+
+    cv::Mat dife;
+    absdiff(erosis, erosisss, dife);
+
+    cv::Mat diferencia;
+    cv::Mat negado;
+    absdiff(cc,cu,diferencia);
+
+
+    bitwise_not(diferencia, negado);
+
+
+
+    dilat.copyTo(frame(tercero));
+
+
+    dife.copyTo(frame(tercero));
+
+    dilatC.copyTo(frame(cuarto));
+
+    //negado.copyTo(frame(cuarto));
+    pixelate3D(dilatC, dilatC, blockSize);
+
+    if(!frame.empty()){
+        cv::cvtColor(frame, frame, cv::COLOR_GRAY2BGR);
+        //frame_roi.copyTo(frame);
+    }
+
+    //frame_roi.copyTo(frame);
+
+
+    matToBitmap(env, frame, bitmapOut, false);
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_TrabajoFinal_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
 
     AndroidBitmapInfo infoIn;
     void *pixelsIn;
