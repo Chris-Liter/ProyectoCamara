@@ -1,50 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:id="@+id/main"
+    android:layout_height="match_parent"  android:scrollIndicators="none"
     tools:context=".MainActivity">
+    <FrameLayout
+        android:layout_width="match_parent" android:background="#141414"
+        android:layout_height="match_parent" android:id="@+id/frame_container"/>
 
-    <LinearLayout
-        android:layout_width="match_parent" android:padding="15dp"
-        android:layout_height="match_parent" android:orientation="vertical">
-        <TextView
-            android:id="@+id/sample_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World!" app:layout_constraintTop_toBottomOf="@id/surface_view" />
-<Button
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content" android:text="Prender" android:id="@+id/prender"/>
-<TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" android:text="Video Original"/>
-<com.longdo.mjpegviewer.MjpegView
-    android:layout_width="match_parent" android:id="@+id/video"
-    android:layout_height="300dp"
-    app:layout_constraintVertical_bias="0.081" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:text="Video con FIltro"/>
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="300dp" android:id="@+id/imageView"/>
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/botton_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#141414"
+        app:itemActiveIndicatorStyle="@style/App.Custom.Indicator"
+        app:itemBackground="@drawable/menu_button_border"
+        app:itemIconSize="30dp"
+        app:itemPaddingBottom="2dp"
+        app:itemIconTint="@color/white"
+        app:itemTextColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
 
-        <SeekBar
-            android:id="@+id/barra"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textAlignment="center"
-            android:text="Tamaño del circulo"
-            android:textSize="18sp" android:max="50" android:min="0"
-            android:layout_marginTop="16dp"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:id="@+id/ancho"
-            />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" android:id="@+id/fps"
-            />
-    </LinearLayout>
-</RelativeLayout>
+        app:menu="@menu/boton_menu"
+
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

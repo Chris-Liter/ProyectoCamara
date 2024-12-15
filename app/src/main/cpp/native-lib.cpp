@@ -15,7 +15,7 @@ cv::Mat foregroundMask,pixelatedPerson,filteredFrame;
 cv::Ptr<cv::BackgroundSubtractor> bgSubtractor = cv::createBackgroundSubtractorMOG2();
 
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_mi_proyectocamara_MainActivity_stringFromJNI(
+Java_com_mi_proyectocamara_Interciclo_stringFromJNI(
         JNIEnv* env,
         jobject /* this */) {
     std::string hello = "Trabajo Interciclo con Kotlin y C++";
@@ -182,7 +182,7 @@ cv::Mat elemento = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
 
 int blockSize = 1;
 
-extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_onTrack(JNIEnv* env,jobject /*this*/,jint pos){
+extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_Interciclo_onTrack(JNIEnv* env,jobject /*this*/,jint pos){
     blockSize = pos > 0 ? pos : 1;
 }
 
@@ -209,7 +209,7 @@ void pixels(cv::Mat& frame, cv::Mat& salida){
 std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::steady_clock::now();
 
 
-extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_MainActivity_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
+extern "C" JNIEXPORT void JNICALL Java_com_mi_proyectocamara_Interciclo_detectorBordes(JNIEnv* env,jobject /*this*/,jobject bitmapIn, jobject bitmapOut){
 
     AndroidBitmapInfo infoIn;
     void *pixelsIn;
